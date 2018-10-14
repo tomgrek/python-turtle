@@ -73,14 +73,14 @@ class RLTurtle(turtle.Turtle):
         self.canvas[y-5:y+5, x-5:x+5] = \
             torch.FloatTensor(nd.rotate(self.turtle_icon, self.deg, reshape=False, prefilter=False))
     
-    def left(self, amt):
+    def right(self, amt):
         self.erase_turtle()
         self.deg += amt
         self.deg = self.deg % 360
         self.turtle.setheading(self.deg)
         self.draw_turtle()
         
-    def right(self, amt):
+    def left(self, amt):
         self.erase_turtle()
         self.deg += (360 - amt)
         self.deg = self.deg % 360
@@ -138,4 +138,5 @@ class RLTurtle(turtle.Turtle):
         return self.canvas
 
     def plot(self):
-        return plt.imshow(self.canvas)
+        # invert the y axis
+        return plt.imshow(self.canvas.data.numpy()[::-1])
