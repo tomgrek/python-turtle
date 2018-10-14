@@ -7,3 +7,11 @@ class OffScreenException(RLTurtleException):
         super(OffScreenException, self).__init__(
             msg="Turtle went offscreen."
         )
+
+class UserConditionException(RLTurtleException):
+    def __init__(self, fn, x, y, deg):
+        super(UserConditionException, self).__init__(
+            msg="User condition hit at ({},{}) heading {}: {}".format(
+                x, y, deg, fn.__name__
+            )
+        )

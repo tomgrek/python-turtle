@@ -6,12 +6,13 @@ import numpy as np
 import scipy.ndimage as nd
 import torch
 
-from rlturtle.exception import OffScreenException
+from rlturtle.exception import OffScreenException, UserConditionException
 
 class RLTurtle(turtle.Turtle):
     def __init__(self, width, height,
                  randomize_start_pos=False, 
-                 n_history_frames=1):
+                 n_history_frames=1,
+                 pensize=2):
         """Wraps Python's built in turtle so we can read the pixels (approximately)
         
         Access the canvas as a numpy array at RLTurtle.canvas. (Use RLTurtle.plot() to plot it.)
@@ -29,8 +30,10 @@ class RLTurtle(turtle.Turtle):
         self.HALF_WIDTH = self.WIDTH // 2
         self.HALF_HEIGHT = self.HEIGHT // 2
         self.canvas = torch.zeros((height, width))
+        self.user_conditions = []
         self.randomize_start_pos = False
         self.n_history_frames = n_history_frames
+        self.pensize = pensize
         self.turtle_icon = np.array([[100,0,0,0,0,0,0,0,0,0],
                                      [0,100,100,0,0,0,0,0,0,0],
                                      [0,100,100,100,100,0,0,0,0,0],
@@ -44,6 +47,12 @@ class RLTurtle(turtle.Turtle):
         self.turtle_buffer = torch.zeros((5, 5))
         self.reset()
     
+    def add_condition(self, fn):
+        """Push a function to be tested onto stack, the function will
+        be called with x, y, deg, and raise a UserConditionException
+        if true"""
+        self.user_conditions.append(fn)
+
     def erase_turtle(self):
         y = int(self.y)
         x = int(self.x)
@@ -68,12 +77,14 @@ class RLTurtle(turtle.Turtle):
         self.erase_turtle()
         self.deg += amt
         self.deg = self.deg % 360
+        self.turtle.setheading(self.deg)
         self.draw_turtle()
         
     def right(self, amt):
         self.erase_turtle()
         self.deg += (360 - amt)
         self.deg = self.deg % 360
+        self.turtle.setheading(self.deg)
         self.draw_turtle()
     
     def forward(self, amt):
@@ -89,19 +100,26 @@ class RLTurtle(turtle.Turtle):
                     return False
             self.erase_turtle()
             self.prev_frames.pop(0)
+            last_y = int(self.y)
+            last_x = int(self.x)
             self.y -= y_step
             self.x += x_step
+            if int(self.x) != last_x or int(self.y) != last_y:
+                for fn in self.user_conditions:
+                    if fn.__call__(self.x, self.y, self.deg, self.canvas):
+                        raise UserConditionException(fn, self.x, self.y, self.deg)
+                        return False
             self.canvas[int(self.y)][int(self.x)] = 100
             self.draw_turtle()
             self.prev_frames.append(self.canvas.clone())
             step += 1
         self.x = int(self.x)
         self.y = int(self.y)
-        turtle.setheading(self.deg)
         turtle.setposition(self.x - self.HALF_WIDTH, self.y - self.HALF_HEIGHT)
         
     def reset(self):
         self.turtle.reset()
+        self.turtle.pensize(self.pensize)
         self.canvas = torch.zeros((self.HEIGHT, self.WIDTH))
         self.prev_frames = [self.canvas.clone() for _ in range(0, self.n_history_frames)]
         turtle.penup()
