@@ -1,3 +1,10 @@
+import math
+import turtle
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.ndimage as nd
+import torch
+
 class RLTurtle(turtle.Turtle):
     def __init__(self, width, height,
                  randomize_start_pos=False, 
