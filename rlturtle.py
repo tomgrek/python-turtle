@@ -1,9 +1,12 @@
 import math
 import turtle
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.ndimage as nd
 import torch
+
+from rlturtle.exception import OffScreenException
 
 class RLTurtle(turtle.Turtle):
     def __init__(self, width, height,
@@ -78,10 +81,16 @@ class RLTurtle(turtle.Turtle):
         dx = (math.cos(self.deg * math.pi / 180) * amt)
         step = 0
         while step < amt:
+            y_step = dy / amt
+            x_step = dx / amt
+            if self.y - y_step < 0 or self.y - y_step > self.HEIGHT - 1 or \
+                self.x + x_step < 0 or self.x + x_step > self.WIDTH - 1:
+                    raise OffScreenException
+                    return False
             self.erase_turtle()
             self.prev_frames.pop(0)
-            self.y -= dy / amt
-            self.x += dx / amt
+            self.y -= y_step
+            self.x += x_step
             self.canvas[int(self.y)][int(self.x)] = 100
             self.draw_turtle()
             self.prev_frames.append(self.canvas.clone())
@@ -89,7 +98,7 @@ class RLTurtle(turtle.Turtle):
         self.x = int(self.x)
         self.y = int(self.y)
         turtle.setheading(self.deg)
-        turtle.setposition(self.x, self.y)
+        turtle.setposition(self.x - self.HALF_WIDTH, self.y - self.HALF_HEIGHT)
         
     def reset(self):
         self.turtle.reset()
