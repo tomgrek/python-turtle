@@ -31,7 +31,7 @@ class RLTurtle(turtle.Turtle):
         self.HALF_HEIGHT = self.HEIGHT // 2
         self.canvas = torch.zeros((height, width))
         self.user_conditions = []
-        self.randomize_start_pos = False
+        self.randomize_start_pos = randomize_start_pos
         self.n_history_frames = n_history_frames
         self.pensize = pensize
         self.turtle_icon = np.array([[100,0,0,0,0,0,0,0,0,0],
