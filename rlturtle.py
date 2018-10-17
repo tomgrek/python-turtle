@@ -1,4 +1,5 @@
 import math
+import random
 import turtle
 
 import matplotlib.pyplot as plt
